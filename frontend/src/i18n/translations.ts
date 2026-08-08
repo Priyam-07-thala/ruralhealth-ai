@@ -61,6 +61,10 @@ export const translations = {
     action: 'Action / Status',
     speakNow: 'Listening... Speak symptoms clearly in English, Hindi or Bengali',
     voiceNotSupported: 'Browser Web Speech API not supported. Please type symptoms.',
+    voiceOfflineLabel: '⌨️ Type Input (Offline)',
+    voiceOfflineHint: 'Voice recognition needs internet. Type symptoms below — they will be added to the field.',
+    voiceTypeHere: 'Type symptoms here and press Add...',
+    voiceSubmitBtn: 'Add Text',
     saveLocalSuccess: 'Record saved locally in IndexedDB (Offline Ready)'
   },
   hi: {
@@ -123,6 +127,10 @@ export const translations = {
     action: 'कार्रवाई / स्थिति',
     speakNow: 'सुन रहा है... स्पष्ट बोलें',
     voiceNotSupported: 'वॉयस इनपुट समर्थित नहीं है। कृपया टाइप करें।',
+    voiceOfflineLabel: '⌨️ टेक्स्ट दर्ज करें (ऑफ़लाइन)',
+    voiceOfflineHint: 'वॉयस पहचान के लिए इंटरनेट आवश्यक है। नीचे लक्षण टाइप करें।',
+    voiceTypeHere: 'यहाँ लक्षण लिखें...',
+    voiceSubmitBtn: 'जोड़ें',
     saveLocalSuccess: 'रिकॉर्ड स्थानीय रूप से ऑफ़लाइन सहेजा गया'
   },
   bn: {
@@ -185,6 +193,10 @@ export const translations = {
     action: 'পদক্ষেপ / অবস্থা',
     speakNow: 'শুনছে... স্পষ্টভাবে বলুন',
     voiceNotSupported: 'ভয়েস ইনপুট সমর্থিত নয়। অনুগ্রহ করে টাইপ করুন।',
+    voiceOfflineLabel: '⌨️ টেক্সট ইনপুট (অফলাইন)',
+    voiceOfflineHint: 'ভয়েস রিকগনিশনের জন্য ইন্টারনেট প্রয়োজন। নিচে উপসর্গ টাইপ করুন।',
+    voiceTypeHere: 'এখানে উপসর্গ লিখুন...',
+    voiceSubmitBtn: 'যোগ করুন',
     saveLocalSuccess: 'স্থানীয়ভাবে অফলাইনে সংরক্ষিত হয়েছে'
   }
 };

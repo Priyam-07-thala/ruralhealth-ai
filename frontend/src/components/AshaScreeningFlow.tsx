@@ -455,6 +455,7 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
                 </label>
                 <VoiceInputButton
                   lang={lang}
+                  isOnline={isOnline}
                   onTranscript={(transcript) => {
                     setSymptomsText((prev) => (prev ? `${prev}, ${transcript}` : transcript));
                   }}

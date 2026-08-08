@@ -400,4 +400,34 @@ async def health_chat(request: ChatRequest):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
+        err_str = str(e)
+        if "insufficient_quota" in err_str or "credit_balance_exhausted" in err_str or "429" in err_str:
+            # Fallback response for offline / credit-exhausted state
+            user_msg = (request.messages[-1].content if request.messages else "").lower()
+            
+            # Simple rule-based guidance for hackathon demo resilience
+            advice = []
+            if "fever" in user_msg or "बुखार" in user_msg or "জ্বর" in user_msg:
+                advice.append("• **Fever Management:** Stay hydrated with clean water/ORS, take adequate rest, and use a cool damp cloth on forehead to reduce temp.")
+                advice.append("• **Red Flags:** If fever >102°F lasts more than 2 days or is accompanied by severe headache, rash, or vomiting, visit the nearest PHC immediately.")
+            elif "cough" in user_msg or "cold" in user_msg or "खांसी" in user_msg:
+                advice.append("• **Cough & Cold Care:** Drink warm water or herbal tea (tulsi/ginger), practice steam inhalation, and rest.")
+                advice.append("• **Warning:** If cough persists >2 weeks or produces blood/chest pain, get tested for TB/respiratory infection at PHC.")
+            elif "sugar" in user_msg or "diabetes" in user_msg or "शुगर" in user_msg:
+                advice.append("• **Blood Sugar Management:** Avoid direct sweets, sugary tea, and refined flour. Eat whole grains, green leafy vegetables, and stay active.")
+                advice.append("• **Screening:** Regular glucose monitoring at PHC is recommended.")
+            elif "bp" in user_msg or "blood pressure" in user_msg or "बीपी" in user_msg:
+                advice.append("• **Blood Pressure Guidance:** Reduce daily salt intake, manage stress, avoid tobacco/alcohol, and exercise daily.")
+                advice.append("• **Critical:** If BP >160/100 or experiencing severe dizziness/blurred vision, seek emergency care.")
+            else:
+                advice.append("• **General Health Care:** Ensure clean drinking water, proper nutrition, adequate sleep, and hygiene.")
+                advice.append("• **Consultation:** Please visit your local ASHA worker or Primary Health Centre (PHC) for a clinical evaluation.")
+
+            fallback_reply = (
+                "⚠️ *Note: OpenAI API quota exhausted. Operating in Rule-Based Medical Decision Support Mode.*\n\n"
+                + "\n".join(advice)
+                + "\n\n⚕️ *This is AI guidance only — not a medical diagnosis. Please consult a doctor for proper evaluation.*"
+            )
+            return ChatResponse(reply=fallback_reply)
+
+        raise HTTPException(status_code=500, detail=f"Chat error: {err_str}")

@@ -105,10 +105,11 @@ It enables a complete screening workflow:
 - UI strings available in: English, Hindi (हिंदी), Bengali (বাংলা)
 - Language selector in header - switches app-wide instantly
 
-#### 12. Voice Input
-- Web Speech API integration on assessment form
-- Microphone button transcribes voice to any text field
-- Graceful fallback if browser unsupported
+#### 12. Voice Input (Online + Offline)
+- **Online mode**: Web Speech API (webkitSpeechRecognition) — microphone button transcribes speech in English, Hindi (hi-IN), or Bengali (bn-IN). Transcript appended to symptoms field.
+- **Offline mode**: Automatically switches to an inline keyboard-input panel (amber UI). ASHA worker types symptoms and presses Add (or Ctrl+Enter). Text is appended identically to voice mode.
+- Root cause: Web Speech API sends audio to Google cloud servers and REQUIRES internet — offline keyboard panel is the graceful degradation.
+- Localised in all 3 languages (EN/HI/BN)
 
 ---
 
@@ -219,3 +220,4 @@ http://127.0.0.1:5173
 | AI chatbot assistant | Phase 3 |
 | District-level analytics | Phase 3 |
 | Role-based access control | Phase 3 |
+

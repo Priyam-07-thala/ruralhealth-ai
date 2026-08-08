@@ -1,4 +1,4 @@
-﻿# File Structure & Architecture Map
+# File Structure & Architecture Map
 
 > **Last Updated:** Phase 1 - P0 Core MVP Vertical Slice
 > This document is updated automatically after every new feature or structural change.
@@ -130,7 +130,7 @@ frontend/
     |   +-- PhcDashboard.tsx       <- PHC doctor analytics dashboard
     |   +-- PatientDirectory.tsx   <- Patient list + history viewer
     |   +-- MedicalDisclaimer.tsx  <- Reusable disclaimer banner
-    |   +-- VoiceInputButton.tsx   <- Web Speech API voice input
+    |   +-- VoiceInputButton.tsx   <- Voice input (online mic) / keyboard panel (offline fallback)
     +-- db/
     |   +-- offlineDb.ts           <- Dexie IndexedDB + offline risk fallback
     +-- i18n/
@@ -158,7 +158,12 @@ frontend/
 
 **MedicalDisclaimer.tsx** - Reusable disclaimer banner. Displayed on screening result step.
 
-**VoiceInputButton.tsx** - Microphone button using Web Speech API. Gracefully disabled if browser unsupported.
+**VoiceInputButton.tsx** - Adaptive dual-mode input button:
+- **Online mode**: Web Speech API (webkitSpeechRecognition) — mic button transcribes speech in en-IN / hi-IN / bn-IN. Transcript appended to the symptoms field.
+- **Offline mode**: Automatically switches to an inline amber keyboard-input panel because the Web Speech API sends audio to Google's servers and REQUIRES internet. The ASHA worker types symptoms and presses Add or Ctrl+Enter — text is appended identically to voice mode.
+- Receives `isOnline` prop from App.tsx (via AshaScreeningFlow.tsx) to switch modes reactively.
+- All panel strings are localised in EN / HI / BN via translations.ts.
+
 
 **offlineDb.ts** - Two responsibilities:
 1. Dexie IndexedDB wrapper (patients + assessments tables; syncs to server on reconnect)

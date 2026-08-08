@@ -1,0 +1,40 @@
+{
+  "model_type": "Logistic Regression (L-BFGS, balanced)",
+  "training_date": "2026-08-09 02:08:59",
+  "original_rows": 246945,
+  "duplicate_rows": 57298,
+  "cleaned_rows": 189647,
+  "filtered_rows_gte_20": 187850,
+  "original_features": 377,
+  "removed_constant_features": 49,
+  "remaining_features": 328,
+  "total_classes": 773,
+  "supported_classes": 512,
+  "classes_below_5_samples": 115,
+  "classes_below_10_samples": 186,
+  "classes_below_20_samples": 261,
+  "train_samples": 131494,
+  "val_samples": 28178,
+  "test_samples": 28178,
+  "random_state": 42,
+  "primary_model_metrics": {
+    "model": "LogisticRegression",
+    "test_accuracy": 0.8399,
+    "top_3_accuracy": 0.9524,
+    "macro_precision": 0.7696,
+    "macro_recall": 0.8755,
+    "macro_f1": 0.7982,
+    "weighted_f1": 0.846,
+    "training_time_seconds": 37.46
+  },
+  "baseline_model_metrics": {
+    "model": "RandomForestClassifier",
+    "test_accuracy": 0.4436,
+    "top_3_accuracy": 0.5494,
+    "macro_precision": 0.637,
+    "macro_recall": 0.5198,
+    "macro_f1": 0.5101,
+    "weighted_f1": 0.5076,
+    "training_time_seconds": 8.34
+  }
+}

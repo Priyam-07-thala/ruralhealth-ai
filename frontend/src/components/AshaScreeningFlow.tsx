@@ -59,6 +59,10 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
   // Analysis State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeAssessment, setActiveAssessment] = useState<LocalAssessment | null>(null);
+  const [mlPredictions, setMlPredictions] = useState<{
+    predictions: Array<{ rank: number; condition: string; score: number; contributingSymptoms: string[] }>;
+    unknownSymptoms: string[];
+  } | null>(null);
 
   // Common symptoms
   const commonSymptoms = [
@@ -131,7 +135,7 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
 
     if (isOnline) {
       try {
-        // Register/Save patient online
+        // 1. Register/Save patient online
         await fetch('http://127.0.0.1:8000/api/patients', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -146,7 +150,26 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
           })
         });
 
-        // Run AI Screening
+        // 2. Run Real ML Disease Prediction (parallel with risk engine)
+        const symptomsList = symptomsText ? symptomsText.split(',').map(s => s.trim()).filter(Boolean) : [];
+        let mlResult = null;
+        if (symptomsList.length > 0) {
+          try {
+            const mlRes = await fetch('http://127.0.0.1:8000/api/ml/predict', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ symptoms: symptomsList })
+            });
+            if (mlRes.ok) {
+              mlResult = await mlRes.json();
+            }
+          } catch (mlErr) {
+            console.warn('ML predict failed (non-fatal):', mlErr);
+          }
+        }
+        setMlPredictions(mlResult);
+
+        // 3. Run Risk Screening Engine
         const aRes = await fetch('http://127.0.0.1:8000/api/assess', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -154,7 +177,7 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
         });
         resultData = await aRes.json();
 
-        // Save locally to Dexie as synced
+        // 4. Save locally to Dexie as synced
         const localAss: LocalAssessment = {
           ...resultData,
           patient_name: name,
@@ -772,21 +795,61 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
                 </ul>
               </div>
 
-              {/* Likely Conditions & Triage Recommendation */}
+              {/* ML Top-3 Likely Conditions + Triage Recommendation */}
               <div className="space-y-4">
-                <div className="bg-teal-50/70 p-5 rounded-2xl border border-teal-200">
-                  <h3 className="text-sm font-extrabold uppercase tracking-wider text-teal-900 flex items-center gap-2 mb-2">
-                    <Heart className="w-4 h-4 text-teal-700" />
-                    {t.likelyConditions}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {activeAssessment.likely_conditions.map((cond, idx) => (
-                      <span key={idx} className="bg-teal-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-sm">
-                        {cond}
-                      </span>
-                    ))}
+
+                {/* Real ML Predictions Card */}
+                {mlPredictions && mlPredictions.predictions.length > 0 ? (
+                  <div className="bg-teal-50/70 p-5 rounded-2xl border border-teal-200">
+                    <h3 className="text-sm font-extrabold uppercase tracking-wider text-teal-900 flex items-center gap-2 mb-1">
+                      <Heart className="w-4 h-4 text-teal-700" />
+                      {t.likelyConditions}
+                    </h3>
+                    <p className="text-[10px] text-teal-700 font-semibold mb-3">ML model output (symptom-based classifier) — not a medical diagnosis</p>
+                    <ol className="space-y-2.5">
+                      {mlPredictions.predictions.map((pred) => (
+                        <li key={pred.rank} className="bg-white rounded-xl p-3 border border-teal-100 shadow-sm">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-extrabold text-sm text-teal-900 capitalize">
+                              {pred.rank}. {pred.condition}
+                            </span>
+                            <span className="text-xs font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">
+                              score: {(pred.score * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                          {pred.contributingSymptoms.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {pred.contributingSymptoms.map((sym, i) => (
+                                <span key={i} className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                  ✓ {sym}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                    {mlPredictions.unknownSymptoms.length > 0 && (
+                      <p className="text-[10px] text-slate-500 mt-2">
+                        ⚠ Symptoms not in model feature set: {mlPredictions.unknownSymptoms.join(', ')}
+                      </p>
+                    )}
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-teal-50/70 p-5 rounded-2xl border border-teal-200">
+                    <h3 className="text-sm font-extrabold uppercase tracking-wider text-teal-900 flex items-center gap-2 mb-2">
+                      <Heart className="w-4 h-4 text-teal-700" />
+                      {t.likelyConditions}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {activeAssessment.likely_conditions.map((cond, idx) => (
+                        <span key={idx} className="bg-teal-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-sm">
+                          {cond}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-md">
                   <h3 className="text-xs font-extrabold uppercase tracking-widest text-emerald-400 flex items-center gap-2 mb-2">

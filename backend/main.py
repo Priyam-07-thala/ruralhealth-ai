@@ -19,6 +19,14 @@ from schemas import (
 )
 from ml_engine import screening_engine, MEDICAL_DISCLAIMER
 
+# Load ML predictor at startup (once) — raises no exception if model absent
+try:
+    from ml.predictor import disease_predictor as _dp
+    _ML_PREDICTOR = _dp
+except Exception as _ml_err:
+    _ML_PREDICTOR = None
+    print(f"[main] ML predictor not loaded: {_ml_err}")
+
 app = FastAPI(
     title="RuralHealth AI Backend",
     description="AI-Powered Early Disease Risk Prediction & Rural Health Access Platform API",
@@ -431,3 +439,76 @@ async def health_chat(request: ChatRequest):
             return ChatResponse(reply=fallback_reply)
 
         raise HTTPException(status_code=500, detail=f"Chat error: {err_str}")
+
+
+# ─── ML DISEASE PREDICTION ENDPOINT ───────────────────────────────────────────
+
+class MLPredictRequest(BaseModel):
+    symptoms: List[str]
+
+class MLPredictionItem(BaseModel):
+    rank: int
+    condition: str
+    score: float
+    contributingSymptoms: List[str]
+
+class MLPredictResponse(BaseModel):
+    predictions: List[MLPredictionItem]
+    model: dict
+    unknownSymptoms: List[str]
+    disclaimer: str
+
+@app.post("/api/ml/predict", response_model=MLPredictResponse)
+def ml_predict(request: MLPredictRequest):
+    """
+    Symptom-based disease classification using the trained Logistic Regression model.
+    
+    INPUT:  list of symptom strings
+    OUTPUT: Top-3 predicted conditions with model confidence scores and
+            model contributing features (NOT clinical probabilities or diagnoses).
+    
+    IMPORTANT:
+    - Scores are model softmax outputs, NOT clinical probabilities.
+    - Predictions are for decision-support only, NOT medical diagnosis.
+    - Unknown symptoms are silently dropped from the feature vector.
+    """
+    if _ML_PREDICTOR is None or not _ML_PREDICTOR.is_ready:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "ML model not loaded. "
+                "Run 'python backend/ml/train_model.py' to train and save the model."
+            )
+        )
+
+    if not request.symptoms:
+        raise HTTPException(
+            status_code=400,
+            detail="Request must include at least one symptom in the 'symptoms' list."
+        )
+
+    # Validate: at least one symptom must match a known feature
+    # (predictor handles this gracefully and returns empty predictions)
+    result = _ML_PREDICTOR.predict_disease(request.symptoms)
+
+    if not result["predictions"] and result.get("unknownSymptoms"):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"None of the provided symptoms are in the model's known feature set. "
+                f"Unknown: {result['unknownSymptoms']}. "
+                "Please use standard symptom names (e.g. 'fever', 'cough', 'fatigue')."
+            )
+        )
+
+    return MLPredictResponse(
+        predictions=[
+            MLPredictionItem(**pred) for pred in result["predictions"]
+        ],
+        model=result["modelInfo"],
+        unknownSymptoms=result.get("unknownSymptoms", []),
+        disclaimer=(
+            "These are model contributing features, not medical causal explanations. "
+            "This is a decision-support prototype, not a clinically validated diagnostic system."
+        )
+    )

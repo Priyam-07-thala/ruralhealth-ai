@@ -26,14 +26,29 @@ The backend is a Python FastAPI REST API that handles data persistence, AI scree
 ```
 backend/
 +-- main.py           <- FastAPI application entry point & all API routes
-+-- ml_engine.py      <- Deterministic clinical risk screening engine
++-- ml_engine.py      <- Deterministic clinical risk screening engine (vitals + lifestyle)
 +-- database.py       <- SQLAlchemy ORM models + SQLite connection
 +-- schemas.py        <- Pydantic request/response validation schemas
 +-- requirements.txt  <- Python package dependencies
++-- .env              <- Local environment variables (OPENAI_API_KEY) — not committed
++-- data/
+|   +-- Final_Augmented_dataset_Diseases_and_Symptoms.csv  <- Disease & Symptoms dataset (246,945 rows, not committed)
++-- ml/
+    +-- train_model.py    <- One-time training script: preprocess, train LR+RF, evaluate, save artifacts
+    +-- predictor.py      <- Singleton ML prediction service: loaded once at startup
+    +-- test_predictor.py <- Automated tests for predictor.py (5 test cases)
+    +-- test_api.py       <- Automated tests for POST /api/ml/predict endpoint
+    +-- training_report.md  <- Auto-generated training & evaluation report
+    +-- models/
+        +-- disease_model.joblib      <- Trained Logistic Regression classifier
+        +-- label_encoder.joblib      <- LabelEncoder for disease class names
+        +-- feature_names.json        <- Ordered list of 328 symptom feature names
+        +-- supported_classes.json    <- 512 supported disease classes (>= 20 samples)
+        +-- model_metadata.json       <- Training metrics, cleaning stats, model info
 ```
 
 ### main.py
-**Role:** API entry point. Defines all HTTP endpoints and orchestrates calls between the database and the ML engine.
+**Role:** API entry point. Defines all HTTP endpoints and orchestrates calls between the database, ML engine, and real ML predictor.
 
 | Endpoint | Method | Purpose |
 |---|---|---|
@@ -45,11 +60,14 @@ backend/
 | /api/assessments/{id}/referral | PUT | Update referral status of an assessment |
 | /api/sync | POST | Batch-sync offline patient/assessment records from IndexedDB |
 | /api/dashboard/stats | GET | Aggregate dashboard metrics |
+| /api/ml/predict | POST | Real ML disease classification from symptom list (Top-3 predictions) |
+| /api/chat | POST | OpenAI GPT-4o mini health chatbot endpoint |
 
 **Connections:**
 - Imports database.py for ORM session and models
 - Imports schemas.py for request/response validation
-- Imports ml_engine.py to run screening on each assessment
+- Imports ml_engine.py to run risk screening on each assessment
+- Imports ml/predictor.py (singleton) for real symptom-based disease classification
 - Called by the React frontend via fetch() API calls
 
 ---

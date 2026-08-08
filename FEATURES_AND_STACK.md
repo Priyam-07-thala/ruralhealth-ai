@@ -56,6 +56,49 @@ It enables a complete screening workflow:
   - "Possible Hypertension-Related Concern"
   - "Elevated TB Screening Concern - Sputum Smear Recommended"
 
+#### 4. Real ML Disease Classifier (Phase 2 — COMPLETE)
+
+> **Separate from the risk engine** — the ML model is a symptom-based disease classifier, not a vitals triage system.
+
+**Dataset:** `dhivyeshrk/diseases-and-symptoms-dataset` (Kaggle)
+- 246,945 rows × 377 binary symptom features × 773 disease classes
+- Deduplicated: 57,298 duplicate rows removed → 189,647 clean rows
+- 49 zero-variance features removed → 328 remaining features
+- Class filtering: only 512 classes with ≥ 20 samples retained (practical model)
+
+**Training Pipeline** (`backend/ml/train_model.py`):
+- Stratified split: 70% Train / 15% Val / 15% Test (random_state=42)
+- Primary: **Logistic Regression** (L-BFGS, class_weight='balanced', max_iter=200)
+- Baseline: **Random Forest** (n_estimators=50, max_depth=15) for comparison
+
+**Model Evaluation Results:**
+
+| Metric | Logistic Regression ✅ (selected) | Random Forest |
+|---|---|---|
+| Test Accuracy | 0.8399 | 0.4436 |
+| **Top-3 Accuracy** | **0.9524** | 0.5494 |
+| Macro F1 | 0.7982 | 0.5101 |
+| Weighted F1 | 0.8460 | 0.5076 |
+
+**Explainability:** For each predicted class, model contributing features are derived from Logistic Regression coefficients intersected with input symptoms. NOT clinical causal explanations.
+
+**Prediction Service** (`backend/ml/predictor.py`):
+- Loaded once at backend startup (`disease_predictor = DiseasePredictor()`)
+- `predict_disease(symptoms: list[str])` → Top-3 predictions with scores + contributing features
+- Unknown symptoms silently dropped; gracefully returns empty if all unknown
+
+**API Endpoint** `POST /api/ml/predict`:
+- Input: `{ "symptoms": ["fever", "cough", "fatigue"] }`
+- Output: Top-3 predictions with condition name, model score, contributing symptom features
+- HTTP 400 for empty list or all-unknown symptoms
+- HTTP 503 if model not loaded (run train_model.py first)
+
+**Frontend Integration:**
+- `AshaScreeningFlow.tsx` calls `/api/ml/predict` when user clicks "Analyze"
+- Step 3 result screen shows real Top-3 ML conditions with scores and model contributing features
+- Falls back to risk engine's likely_conditions if ML endpoint unavailable
+
+
 #### 4. Explainability
 - Every screening result includes human-readable contributing factors
 - Examples: "Blood Glucose >= 200 mg/dL", "Persistent Cough > 14 days", "Stage 2 Blood Pressure"

@@ -143,7 +143,9 @@ frontend/
 
 **main.tsx** - Bootstraps the React app into index.html. Renders App.tsx and imports index.css.
 
-**App.tsx** - Root component. Manages view routing (Dashboard/Patients/Assessment/High-Risk), network online/offline detection, offline sync via POST /api/sync, and language state.
+**App.tsx** - Root component. Manages view routing (Dashboard/Patients/Assessment/High-Risk), network online/offline detection, offline sync, and language state.
+- **Online detection**: Dual-signal system — (1) native `window` `online`/`offline` browser events for real network drops + (2) a 5-second heartbeat pinging `/api/health` to detect if the local backend is down. `isOnline` becomes `false` if EITHER the network disconnects OR the backend stops responding.
+- Watches `isOnline` via a separate `useEffect` to show toast notifications and auto-trigger sync on reconnect.
 
 **Header.tsx** - Top nav bar. Contains: "+ New Assessment" CTA, tab navigation, language selector (EN/HI/BN), and Online/Offline status pill. Receives props from App.tsx.
 

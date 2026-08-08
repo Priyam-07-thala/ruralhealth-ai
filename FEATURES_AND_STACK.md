@@ -1,4 +1,4 @@
-﻿# RuralHealth AI - Features & Tech Stack
+# RuralHealth AI - Features & Tech Stack
 
 > **Last Updated:** Phase 1 - P0 Core MVP Vertical Slice
 > This document is updated automatically after every new feature or structural change.
@@ -100,6 +100,11 @@ It enables a complete screening workflow:
 - Offline risk calculator mirrors server engine for fallback screening
 - On network reconnect: auto-syncs pending records via POST /api/sync
 - Online/Offline status pill always visible in header
+- **Online detection (fixed)**: Dual-signal system in App.tsx:
+  - `window` `online`/`offline` browser events catch real network drops
+  - 5-second heartbeat pings `/api/health` — pill turns red if the **local backend** goes down (not just internet)
+  - `isOnline` becomes `false` if EITHER signal fails; auto-sync + toast fires on reconnect
+
 
 #### 11. Multilingual Support
 - UI strings available in: English, Hindi (हिंदी), Bengali (বাংলা)

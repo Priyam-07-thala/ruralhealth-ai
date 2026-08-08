@@ -1,9 +1,15 @@
 import uuid
+import os
 from typing import List, Optional
 from datetime import datetime
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Load .env from the same directory as this file
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 
 from database import init_db, get_db, PatientModel, AssessmentModel
 from schemas import (
@@ -306,3 +312,92 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
         "risk_distribution": risk_distribution,
         "village_distribution": village_data
     }
+
+
+# ─── HEALTH CHATBOT ENDPOINT ─────────────────────────────────────────────────
+
+CHAT_SYSTEM_PROMPT = """
+You are a rural health assistant AI integrated into the RuralHealth AI platform used by ASHA 
+(Accredited Social Health Activist) workers and patients in rural India.
+
+Your role:
+- Help users understand their symptoms and what they might indicate
+- Provide practical, actionable home-care tips for mild conditions
+- Clearly tell users when symptoms are serious and require IMMEDIATE medical attention or hospital visit
+- Be warm, simple, and easy to understand — many users are rural health workers or patients with limited medical knowledge
+- Support responses in English, Hindi, or Bengali based on the user's language
+
+Common conditions to be aware of in rural India:
+Fever, Malaria, Dengue, Typhoid, TB (Tuberculosis), Diabetes, Hypertension, Anaemia,
+Diarrhoea, Respiratory infections, Snake bite, Malnutrition, Maternal health issues.
+
+STRICT RULES:
+1. NEVER prescribe specific medicines or dosages
+2. ALWAYS recommend consulting a qualified doctor or PHC (Primary Health Centre) for any concerning symptom
+3. For emergency symptoms (chest pain, breathing difficulty, unconsciousness, severe bleeding, high fever >104°F), 
+   IMMEDIATELY tell the user to call 108 (India emergency) or go to the nearest hospital
+4. Always end your response with: "\n\n⚕️ *This is AI guidance only — not a medical diagnosis. Please consult a doctor for proper evaluation.*"
+5. Keep responses concise and structured (use bullet points)
+
+Remember: Your guidance could impact the health of vulnerable rural populations. Be responsible.
+"""
+
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+    language: Optional[str] = "en"  # "en", "hi", or "bn"
+
+class ChatResponse(BaseModel):
+    reply: str
+    error: Optional[str] = None
+
+@app.post("/api/chat", response_model=ChatResponse)
+async def health_chat(request: ChatRequest):
+    """
+    Health chatbot endpoint powered by OpenAI GPT.
+    The API key is read server-side from .env — never exposed to the browser.
+    """
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    
+    if not api_key or api_key == "your_openai_api_key_here":
+        raise HTTPException(
+            status_code=503,
+            detail="OpenAI API key not configured. Please add OPENAI_API_KEY to backend/.env"
+        )
+    
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+        
+        # Build message list: system prompt + conversation history
+        lang_hint = {
+            "hi": "Please respond in Hindi (हिंदी).",
+            "bn": "Please respond in Bengali (বাংলা).",
+            "en": "Please respond in English."
+        }.get(request.language or "en", "Please respond in English.")
+        
+        openai_messages = [
+            {"role": "system", "content": CHAT_SYSTEM_PROMPT + f"\n\nLanguage instruction: {lang_hint}"}
+        ]
+        
+        # Add conversation history (last 20 messages max to stay within token limits)
+        for msg in request.messages[-20:]:
+            openai_messages.append({"role": msg.role, "content": msg.content})
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",   # Fast and cost-effective
+            messages=openai_messages,
+            max_tokens=600,
+            temperature=0.4,        # More deterministic for medical guidance
+        )
+        
+        reply = response.choices[0].message.content or "I could not generate a response. Please try again."
+        return ChatResponse(reply=reply)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")

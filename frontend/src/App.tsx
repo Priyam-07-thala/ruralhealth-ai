@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { AshaScreeningFlow } from './components/AshaScreeningFlow';
 import { PhcDashboard } from './components/PhcDashboard';
 import { PatientDirectory } from './components/PatientDirectory';
+import { HealthChatbot } from './components/HealthChatbot';
 import type { Language } from './i18n/translations';
 import { db } from './db/offlineDb';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -172,6 +173,9 @@ export function App() {
           />
         )}
       </main>
+
+      {/* Floating Health Chatbot */}
+      <HealthChatbot lang={lang} isOnline={isOnline} />
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 text-[11px] py-4 text-center border-t border-slate-800">

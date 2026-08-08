@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { AshaScreeningFlow } from './components/AshaScreeningFlow';
 import { PhcDashboard } from './components/PhcDashboard';
@@ -20,34 +20,59 @@ export function App() {
   const pendingSyncCount = unsyncedPatients.length + unsyncedAssessments.length;
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      showNotification('Network connection restored. Syncing records...');
-      triggerSync();
+    let heartbeatTimer: ReturnType<typeof setInterval>;
+
+    // Check if the backend is actually reachable (not just internet connectivity)
+    const checkBackend = async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/health', {
+          signal: AbortSignal.timeout(3000),
+        });
+        setIsOnline(res.ok);
+      } catch {
+        // Backend unreachable (stopped, crashed, or no network)
+        setIsOnline(false);
+      }
     };
 
-    const handleOffline = () => {
-      setIsOnline(false);
-      showNotification('Operating in OFFLINE mode. All data saved to IndexedDB.');
-    };
+    // Native browser events for real network disconnection
+    const handleOnline = () => checkBackend();
+    const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initial backend ping check
-    fetch('http://127.0.0.1:8000/api/health')
-      .then((res) => {
-        if (res.ok) setIsOnline(true);
-      })
-      .catch(() => {
-        // Backend not reachable
-      });
+    // Initial check on mount
+    checkBackend();
+
+    // Periodic heartbeat every 5 seconds — keeps pill accurate
+    heartbeatTimer = setInterval(checkBackend, 5000);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearInterval(heartbeatTimer);
     };
   }, []);
+
+  // Show toast + trigger sync whenever online status changes
+  const prevOnlineRef = React.useRef<boolean | null>(null);
+  useEffect(() => {
+    if (prevOnlineRef.current === null) {
+      // Skip first render — just record initial state
+      prevOnlineRef.current = isOnline;
+      return;
+    }
+    if (isOnline && prevOnlineRef.current === false) {
+      showNotification('Backend connected. Syncing offline records...');
+      triggerSync();
+    }
+    if (!isOnline && prevOnlineRef.current === true) {
+      showNotification('Operating in OFFLINE mode. All data saved locally.');
+    }
+    prevOnlineRef.current = isOnline;
+  }, [isOnline]);
+
 
   const showNotification = (msg: string) => {
     setNotification(msg);

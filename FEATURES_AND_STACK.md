@@ -116,6 +116,13 @@ It enables a complete screening workflow:
 - Root cause: Web Speech API sends audio to Google cloud servers and REQUIRES internet — offline keyboard panel is the graceful degradation.
 - Localised in all 3 languages (EN/HI/BN)
 
+#### 13. AI Health Assistant Chatbot (OpenAI GPT-4o mini)
+- Floating chat widget accessible across all views
+- Powered by OpenAI GPT-4o mini via backend endpoint `POST /api/chat` (API key stored securely in backend `.env`)
+- Answers symptom queries (e.g. fever, cough, blood sugar, high BP) with actionable guidance and home care tips
+- Enforces strict rural health guardrails: no medicine prescriptions, mandatory PHC/doctor referral warnings, emergency 108 alerts for critical symptoms
+- Supports multilingual interaction in English, Hindi, and Bengali with one-click suggestion pills
+
 ---
 
 ## Tech Stack

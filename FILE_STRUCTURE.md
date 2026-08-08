@@ -131,6 +131,7 @@ frontend/
     |   +-- PatientDirectory.tsx   <- Patient list + history viewer
     |   +-- MedicalDisclaimer.tsx  <- Reusable disclaimer banner
     |   +-- VoiceInputButton.tsx   <- Voice input (online mic) / keyboard panel (offline fallback)
+    |   +-- HealthChatbot.tsx      <- Floating AI health assistant (OpenAI GPT-4o mini)
     +-- db/
     |   +-- offlineDb.ts           <- Dexie IndexedDB + offline risk fallback
     +-- i18n/
@@ -165,6 +166,12 @@ frontend/
 - **Offline mode**: Automatically switches to an inline amber keyboard-input panel because the Web Speech API sends audio to Google's servers and REQUIRES internet. The ASHA worker types symptoms and presses Add or Ctrl+Enter — text is appended identically to voice mode.
 - Receives `isOnline` prop from App.tsx (via AshaScreeningFlow.tsx) to switch modes reactively.
 - All panel strings are localised in EN / HI / BN via translations.ts.
+
+**HealthChatbot.tsx** - Floating AI health assistant widget:
+- Powered by OpenAI GPT-4o mini via backend `POST /api/chat`
+- Multi-turn conversation history with quick-prompt pills for fever, cough, blood sugar, etc.
+- Localised prompts & strings for English, Hindi, Bengali
+- Strict safety guardrails and medical disclaimers on every AI response
 
 
 **offlineDb.ts** - Two responsibilities:

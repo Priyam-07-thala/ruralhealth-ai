@@ -73,5 +73,7 @@ npm run dev
 ```
 *The frontend will run at `http://localhost:5173`. Open this URL in your browser to start using RuralHealth AI!*
 
+## Drive Video Link
+### https://drive.google.com/file/d/1h_03v0dPRL_zMRVGjCnYnOE2QUSFpCmz/view?usp=drive_link
 ## 📜 License
 This project was built for the RuralHealth AI Hackathon.

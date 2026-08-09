@@ -73,20 +73,22 @@ RuralHealth AI/
 | :--- | :--- | :--- |
 | **1. Patient Registration** | `IMPLEMENTED` | Captures name, age, gender, village, phone, custom patient ID. Persists to IndexedDB and SQLite. |
 | **2. Health Assessment** | `IMPLEMENTED` | Collects symptoms, duration, temp, BP, glucose, HR, height, weight, auto-calc BMI, smoking, alcohol, family history. |
-| **3. AI Screening** | `IMPLEMENTED` | Computes risk level (LOW/MODERATE/HIGH), risk score %, likely conditions, contributing factors, recommendations, and disclaimer notice. |
-| **4. Explainability** | `IMPLEMENTED` | Displays detailed breakdown of exact clinical risk factors (e.g. Glucose >= 140, High BP, Cough > 14 days) instead of raw black-box % numbers. |
-| **5. Offline-First Capability** | `IMPLEMENTED` | Operates without internet. Dexie IndexedDB saves patients/assessments locally with sync tracking & offline risk calculator fallback. Batch syncs when reconnected. |
-| **6. PHC Dashboard** | `IMPLEMENTED` | Displays patient metrics, high-risk queue table, referral status controls, risk distribution pie chart, and village triage bar chart. |
-| **7. Referral System** | `IMPLEMENTED` | Workflow for marking `NOT_REFERRED`, `REFERRED`, `APPOINTMENT_REQUESTED`, and `CONSULTATION_COMPLETED`. |
-| **8. Multilingual UI** | `IMPLEMENTED` | Full dictionary switching for English, Hindi (हिन्दी), and Bengali (বাংলা). |
-| **9. Voice Input** | `PARTIALLY IMPLEMENTED` | Web Speech API integration for dictating symptoms hands-free. Works in supporting browsers; displays text fallback on unsupported browsers. |
-| **10. Responsive Design** | `IMPLEMENTED` | Mobile-first ASHA wizard layout with touch targets >= 48px, high contrast, and responsive grid layouts for tablet/desktop. |
+| **3. AI Screening Engine** | `IMPLEMENTED` | Computes risk level (LOW/MODERATE/HIGH), risk score %, likely conditions, contributing factors, recommendations, and disclaimer notice. |
+| **4. Explainability** | `IMPLEMENTED` | Displays detailed breakdown of exact clinical risk factors (e.g. Glucose >= 140, High BP, Cough > 14 days). |
+| **5. Real ML Disease Classifier** | `IMPLEMENTED` | Live symptom-based disease classification powered by a Logistic Regression model trained on 246k rows, hosted via FastAPI singleton. |
+| **6. Offline-First Capability** | `IMPLEMENTED` | Operates without internet. Dexie IndexedDB saves patients/assessments locally with sync tracking & offline risk calculator fallback. Batch syncs when reconnected. |
+| **7. PHC Dashboard** | `IMPLEMENTED` | Displays patient metrics, high-risk queue table, referral status controls, and Recharts risk distribution pie chart. |
+| **8. Referral System** | `IMPLEMENTED` | Workflow for marking `NOT_REFERRED`, `REFERRED`, `APPOINTMENT_REQUESTED`, and `CONSULTATION_COMPLETED`. |
+| **9. Multilingual UI** | `IMPLEMENTED` | Full dictionary switching for English, Hindi (हिन्दी), and Bengali (বাংলা). |
+| **10. Voice Input (Online/Offline)** | `IMPLEMENTED` | Web Speech API integration for dictating symptoms hands-free when online. Seamlessly falls back to a localized keyboard-input panel when offline. |
+| **11. AI Health Chatbot** | `IMPLEMENTED` | OpenAI GPT-4o mini integrated floating assistant for symptom queries and home care advice with rural health safety guardrails. |
+| **12. Teleconsultation Maps** | `IMPLEMENTED` | Dual-map engine (Google Maps + OpenStreetMap Nominatim fallback) for finding and mapping nearby hospitals, complete with manual location search. |
+| **13. Dynamic Mascot & UI FX** | `IMPLEMENTED` | A context-aware vector Doctor Mascot guides the user through the screening wizard. Global medical-themed cursor animations (Canvas) added for premium feel. |
 
 ---
 
 ## 4. Features Only Mocked / Placeholders
 
-* **ML Model File**: Screening logic uses an extensive rule-based clinical scoring algorithm based on medical triage guidelines (`ml_engine.py`) rather than a loaded `.pkl` scikit-learn binary file.
 * **PWA Web Manifest**: Application uses IndexedDB for offline storage but does not currently include a `manifest.json` or Service Worker script for "Add to Home Screen" PWA installation.
 
 ---

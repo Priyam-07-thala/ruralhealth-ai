@@ -65,7 +65,15 @@ export const translations = {
     voiceOfflineHint: 'Voice recognition needs internet. Type symptoms below — they will be added to the field.',
     voiceTypeHere: 'Type symptoms here and press Add...',
     voiceSubmitBtn: 'Add Text',
-    saveLocalSuccess: 'Record saved locally in IndexedDB (Offline Ready)'
+    saveLocalSuccess: 'Record saved locally in IndexedDB (Offline Ready)',
+    bookDoctor: 'Book Doctor',
+    nearbyDoctors: 'Nearby Doctors & Centres',
+    selectSlot: 'Select Time Slot',
+    confirmBooking: 'Confirm Teleconsult',
+    myAppointments: 'My Appointments',
+    specialistNeeded: 'Recommended Specialist',
+    bookingConfirmed: 'Appointment Confirmed!',
+    teleconsultTitle: 'Teleconsultation Booking'
   },
   hi: {
     appTitle: 'रूरलहेल्थ एआई',
@@ -131,7 +139,15 @@ export const translations = {
     voiceOfflineHint: 'वॉयस पहचान के लिए इंटरनेट आवश्यक है। नीचे लक्षण टाइप करें।',
     voiceTypeHere: 'यहाँ लक्षण लिखें...',
     voiceSubmitBtn: 'जोड़ें',
-    saveLocalSuccess: 'रिकॉर्ड स्थानीय रूप से ऑफ़लाइन सहेजा गया'
+    saveLocalSuccess: 'रिकॉर्ड स्थानीय रूप से ऑफ़लाइन सहेजा गया',
+    bookDoctor: 'डॉक्टर बुक करें',
+    nearbyDoctors: 'नजदीकी डॉक्टर और केंद्र',
+    selectSlot: 'समय चुनें',
+    confirmBooking: 'टेलीकंसल्ट बुक करें',
+    myAppointments: 'मेरी अपॉइंटमेंट',
+    specialistNeeded: 'अनुशंसित विशेषज्ञ',
+    bookingConfirmed: 'अपॉइंटमेंट की पुष्टि हो गई!',
+    teleconsultTitle: 'टेलीकंसल्टेशन बुकिंग'
   },
   bn: {
     appTitle: 'রুরালহেলথ এআই',
@@ -197,6 +213,14 @@ export const translations = {
     voiceOfflineHint: 'ভয়েস রিকগনিশনের জন্য ইন্টারনেট প্রয়োজন। নিচে উপসর্গ টাইপ করুন।',
     voiceTypeHere: 'এখানে উপসর্গ লিখুন...',
     voiceSubmitBtn: 'যোগ করুন',
-    saveLocalSuccess: 'স্থানীয়ভাবে অফলাইনে সংরক্ষিত হয়েছে'
+    saveLocalSuccess: 'স্থানীয়ভাবে অফলাইনে সংরক্ষিত হয়েছে',
+    bookDoctor: 'ডাক্তার বুক করুন',
+    nearbyDoctors: 'নিকটবর্তী ডাক্তার ও কেন্দ্র',
+    selectSlot: 'সময় বেছে নিন',
+    confirmBooking: 'টেলিকনসাল্ট নিশ্চিত করুন',
+    myAppointments: 'আমার অ্যাপয়েন্টমেন্ট',
+    specialistNeeded: 'প্রস্তাবিত বিশেষজ্ঞ',
+    bookingConfirmed: 'অ্যাপয়েন্টমেন্ট নিশ্চিত হয়েছে!',
+    teleconsultTitle: 'টেলিকনসালটেশন বুকিং'
   }
 };

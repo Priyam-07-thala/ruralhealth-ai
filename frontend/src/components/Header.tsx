@@ -1,10 +1,10 @@
 import React from 'react';
-import { Activity, RefreshCw, Globe, PlusCircle, Stethoscope, Users, Wifi, WifiOff, AlertTriangle } from 'lucide-react';
+import { Activity, RefreshCw, Globe, PlusCircle, Stethoscope, Users, Wifi, WifiOff, AlertTriangle, Video } from 'lucide-react';
 import { translations, type Language } from '../i18n/translations';
 
 interface HeaderProps {
-  currentTab: 'asha' | 'phc' | 'patients' | 'high-risk';
-  onTabChange: (tab: 'asha' | 'phc' | 'patients' | 'high-risk') => void;
+  currentTab: 'asha' | 'phc' | 'patients' | 'high-risk' | 'teleconsult';
+  onTabChange: (tab: 'asha' | 'phc' | 'patients' | 'high-risk' | 'teleconsult') => void;
   lang: Language;
   onLangChange: (lang: Language) => void;
   isOnline: boolean;
@@ -113,7 +113,21 @@ export const Header: React.FC<HeaderProps> = ({
               <span>High-Risk Cases</span>
             </button>
 
+            {/* NEW: Teleconsult / Book Doctor tab */}
+            <button
+              onClick={() => onTabChange('teleconsult')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                currentTab === 'teleconsult'
+                  ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 scale-105'
+                  : 'text-slate-300 hover:text-white hover:bg-indigo-600/30 border border-indigo-500/20'
+              }`}
+            >
+              <Video className="w-4 h-4 text-indigo-400" />
+              <span>Book Doctor</span>
+            </button>
+
           </div>
+
 
           {/* Actions & Utilities (Language, Sync, Online Status) */}
           <div className="hidden lg:flex items-center gap-3">

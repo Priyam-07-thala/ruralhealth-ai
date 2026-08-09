@@ -166,6 +166,25 @@ It enables a complete screening workflow:
 - Enforces strict rural health guardrails: no medicine prescriptions, mandatory PHC/doctor referral warnings, emergency 108 alerts for critical symptoms
 - Supports multilingual interaction in English, Hindi, and Bengali with one-click suggestion pills
 
+#### 14. Teleconsultation Booking Module (Dual-Map Engine)
+- Integrated hospital finder using a robust fallback map engine.
+- **Google Maps**: Loads first if an API key is provided, fetching real nearby hospitals and rendering interactive map markers.
+- **OpenStreetMap + Nominatim Fallback**: Seamlessly switches to free OSS maps if Google Maps fails or the API key is missing.
+- **Manual Location Search**: Allows ASHA workers to manually type a village/city and geocodes it dynamically.
+- **Two-Way Interaction**: Clicking a hospital in the list pans the map and bounces the marker; clicking a marker highlights the hospital in the list.
+
+#### 15. Dynamic Interactive Mascot
+- A cute, flat-vector Doctor Mascot that follows the user throughout the screening workflow.
+- Dynamically changes poses based on context:
+  - Step 1: Holding a pointer stick ("Please fill the form!")
+  - Step 2: Holding a notepad ("I'm noting symptoms...")
+  - Step 3: Reacting to the risk score (Thumbs up for Low Risk, Thinking for Moderate Risk, Shocked/Urgent for High Risk).
+
+#### 16. Medical Cursor Animation
+- A highly unique, global HTML5 Canvas overlay.
+- Leaves a beautiful, fading trail of red hearts and blue medical crosses as the user moves their mouse.
+- Completely non-intrusive (pointer-events-none) and highly engaging.
+
 ---
 
 ## Tech Stack

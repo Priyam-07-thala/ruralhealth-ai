@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   UserPlus, Stethoscope, 
   ArrowRight, Activity, Heart, ShieldAlert, 
-  Thermometer, Phone, MapPin, Sparkles, Send, AlertCircle
+  Thermometer, Phone, MapPin, Sparkles, Send, AlertCircle,
+  Video, ChevronRight, Droplets, Wind, Zap
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { VoiceInputButton } from './VoiceInputButton';
@@ -14,12 +15,42 @@ interface AshaScreeningFlowProps {
   lang: Language;
   isOnline: boolean;
   onAssessmentComplete: () => void;
+  onBookTeleconsult?: () => void;
 }
+const MascotOverlay = ({ step, riskLevel }: { step: 1 | 2 | 3, riskLevel?: string }) => {
+  let mascotSrc = '/mascots/doctor_form.png';
+  if (step === 2) {
+    mascotSrc = '/mascots/doctor_notepad.png';
+  } else if (step === 3) {
+    if (riskLevel === 'HIGH') mascotSrc = '/mascots/doctor_shocked.png';
+    else if (riskLevel === 'MODERATE') mascotSrc = '/mascots/doctor_thinking.png';
+    else mascotSrc = '/mascots/doctor_happy.png';
+  }
+
+  return (
+    <div className="fixed bottom-6 right-20 sm:right-28 z-40 pointer-events-none drop-shadow-[0_10px_15px_rgba(0,0,0,0.15)] animate-fade-in transition-all duration-300">
+      <div className="relative">
+        <img src={mascotSrc} alt="Doctor Mascot" className="w-28 sm:w-36 h-28 sm:h-36 object-contain" />
+        {step === 1 && (
+          <div className="absolute -top-12 -left-16 sm:-left-24 bg-white px-3.5 py-2.5 rounded-2xl text-[11px] sm:text-xs font-extrabold text-slate-800 shadow-xl border border-slate-100 w-32 sm:w-36 after:content-[''] after:absolute after:bottom-[-6px] after:right-8 after:w-3 after:h-3 after:bg-white after:border-r after:border-b after:border-slate-100 after:rotate-45 text-center leading-tight">
+            Please fill the form!
+          </div>
+        )}
+        {step === 2 && (
+          <div className="absolute -top-12 -left-16 sm:-left-24 bg-white px-3.5 py-2.5 rounded-2xl text-[11px] sm:text-xs font-extrabold text-slate-800 shadow-xl border border-slate-100 w-36 after:content-[''] after:absolute after:bottom-[-6px] after:right-8 after:w-3 after:h-3 after:bg-white after:border-r after:border-b after:border-slate-100 after:rotate-45 text-center leading-tight">
+            I'm noting symptoms...
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
   lang,
   isOnline,
-  onAssessmentComplete
+  onAssessmentComplete,
+  onBookTeleconsult
 }) => {
   const t = translations[lang];
 
@@ -277,6 +308,8 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       
+      <MascotOverlay step={step} riskLevel={activeAssessment?.risk_level} />
+
       {/* Wizard Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-600 mb-2">
@@ -863,6 +896,15 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
               </div>
             </div>
 
+
+            {/* ── OBJECTIFIED DISEASE RISK CARD ─────────────────────────── */}
+            <ObjectifiedRiskCard
+              conditions={activeAssessment.likely_conditions || []}
+              riskLevel={activeAssessment.risk_level}
+              riskScore={activeAssessment.risk_score}
+              onBookTeleconsult={onBookTeleconsult}
+            />
+
             {/* Healthcare Safety Disclaimer Component */}
             <MedicalDisclaimer lang={lang} />
 
@@ -916,3 +958,193 @@ export const AshaScreeningFlow: React.FC<AshaScreeningFlowProps> = ({
     </div>
   );
 };
+
+// ────────────────────────────────────────────────────────────────────────────
+// OBJECTIFIED RISK DISEASE CARD
+// Maps ML/rule-based conditions → specialist, urgency, recommended tests
+// ────────────────────────────────────────────────────────────────────────────
+
+interface ObjectifiedRiskCardProps {
+  conditions: string[];
+  riskLevel: string;
+  riskScore: number;
+  onBookTeleconsult?: () => void;
+}
+
+interface SpecialistInfo {
+  specialty: string;
+  icon: React.ReactNode;
+  urgency: 'URGENT' | 'SOON' | 'ROUTINE';
+  urgencyLabel: string;
+  urgencyColor: string;
+  tests: string[];
+  gradientClass: string;
+  borderClass: string;
+}
+
+function mapConditionsToSpecialist(conditions: string[], riskLevel: string): SpecialistInfo {
+  const text = conditions.join(' ').toLowerCase();
+
+  if (text.includes('tb') || text.includes('tuberculosis') || text.includes('sputum')) {
+    return {
+      specialty: 'Pulmonologist / TB Specialist',
+      icon: <Wind className="w-5 h-5" />,
+      urgency: riskLevel === 'HIGH' ? 'URGENT' : 'SOON',
+      urgencyLabel: riskLevel === 'HIGH' ? '⚠ Urgent — Within 24 Hours' : '📅 Within 3–5 Days',
+      urgencyColor: riskLevel === 'HIGH' ? 'text-rose-700 bg-rose-100' : 'text-amber-700 bg-amber-100',
+      tests: ['Sputum Smear Microscopy (AFB)', 'CBNAAT / GeneXpert MTB/RIF', 'Chest X-Ray (PA View)', 'Mantoux / TST Test'],
+      gradientClass: 'from-amber-500 to-orange-500',
+      borderClass: 'border-amber-200 bg-amber-50'
+    };
+  }
+  if (text.includes('diabet')) {
+    return {
+      specialty: 'Endocrinologist / Diabetologist',
+      icon: <Droplets className="w-5 h-5" />,
+      urgency: riskLevel === 'HIGH' ? 'URGENT' : 'SOON',
+      urgencyLabel: riskLevel === 'HIGH' ? '⚠ Urgent — Within 24 Hours' : '📅 Within 3–5 Days',
+      urgencyColor: riskLevel === 'HIGH' ? 'text-rose-700 bg-rose-100' : 'text-amber-700 bg-amber-100',
+      tests: ['Fasting Blood Glucose (FBG)', 'HbA1c (Glycated Haemoglobin)', 'Post-Prandial Blood Glucose', 'Urine Micro-Albumin'],
+      gradientClass: 'from-blue-500 to-cyan-500',
+      borderClass: 'border-blue-200 bg-blue-50'
+    };
+  }
+  if (text.includes('cardiovascular') || text.includes('chest')) {
+    return {
+      specialty: 'Cardiologist',
+      icon: <Heart className="w-5 h-5" />,
+      urgency: 'URGENT',
+      urgencyLabel: '🚨 URGENT — Immediate Evaluation',
+      urgencyColor: 'text-rose-700 bg-rose-100',
+      tests: ['12-Lead ECG', 'Echocardiogram', 'Troponin I/T Test', 'Chest X-Ray'],
+      gradientClass: 'from-rose-500 to-red-500',
+      borderClass: 'border-rose-200 bg-rose-50'
+    };
+  }
+  if (text.includes('hypertension') || text.includes('blood pressure')) {
+    return {
+      specialty: 'Cardiologist / Internal Medicine',
+      icon: <Heart className="w-5 h-5" />,
+      urgency: riskLevel === 'HIGH' ? 'URGENT' : 'SOON',
+      urgencyLabel: riskLevel === 'HIGH' ? '⚠ Urgent — Within 24 Hours' : '📅 Within 3–5 Days',
+      urgencyColor: riskLevel === 'HIGH' ? 'text-rose-700 bg-rose-100' : 'text-amber-700 bg-amber-100',
+      tests: ['Ambulatory Blood Pressure Monitor (ABPM)', 'ECG', 'Serum Creatinine & eGFR', 'Urine Routine Analysis'],
+      gradientClass: 'from-rose-500 to-pink-500',
+      borderClass: 'border-rose-200 bg-rose-50'
+    };
+  }
+  if (text.includes('anemia') || text.includes('nutritional')) {
+    return {
+      specialty: 'General Physician / Haematologist',
+      icon: <Droplets className="w-5 h-5" />,
+      urgency: 'SOON',
+      urgencyLabel: '📅 Within 3–5 Days',
+      urgencyColor: 'text-amber-700 bg-amber-100',
+      tests: ['Complete Blood Count (CBC)', 'Serum Iron & TIBC', 'Serum Ferritin', 'Peripheral Blood Smear'],
+      gradientClass: 'from-purple-500 to-violet-500',
+      borderClass: 'border-purple-200 bg-purple-50'
+    };
+  }
+  // Default
+  return {
+    specialty: 'General Physician (MBBS / MD)',
+    icon: <Stethoscope className="w-5 h-5" />,
+    urgency: 'ROUTINE',
+    urgencyLabel: '✓ Routine — Within 1 Week',
+    urgencyColor: 'text-emerald-700 bg-emerald-100',
+    tests: ['Complete Blood Count (CBC)', 'Urine Routine & Microscopy', 'Blood Glucose (Fasting)', 'Chest X-Ray (if symptomatic)'],
+    gradientClass: 'from-emerald-500 to-teal-500',
+    borderClass: 'border-emerald-200 bg-emerald-50'
+  };
+}
+
+const ObjectifiedRiskCard: React.FC<ObjectifiedRiskCardProps> = ({
+  conditions,
+  riskLevel,
+  riskScore,
+  onBookTeleconsult
+}) => {
+  const info = mapConditionsToSpecialist(conditions, riskLevel);
+
+  return (
+    <div className={`rounded-2xl border-2 p-5 ${info.borderClass} mt-2`}>
+      {/* Card Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${info.gradientClass} text-white flex items-center justify-center shadow-sm`}>
+            {info.icon}
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Objectified Risk → Specialist</p>
+            <h4 className="font-extrabold text-slate-900 text-sm">{info.specialty}</h4>
+          </div>
+        </div>
+        <span className={`text-[11px] font-black px-3 py-1.5 rounded-full ${info.urgencyColor}`}>
+          {info.urgencyLabel}
+        </span>
+      </div>
+
+      {/* Conditions detected */}
+      <div className="mb-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Detected Risk Conditions</p>
+        <div className="flex flex-wrap gap-1.5">
+          {conditions.map((cond, i) => (
+            <span key={i} className="text-[11px] font-bold bg-white text-slate-700 px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-sm leading-tight">
+              {cond.length > 50 ? cond.slice(0, 48) + '…' : cond}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Recommended Tests */}
+      <div className="mb-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1">
+          <Zap className="w-3 h-3 text-amber-500" />
+          Recommended Diagnostic Tests
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {info.tests.map((test, i) => (
+            <div key={i} className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-slate-200 shadow-sm">
+              <span className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 text-white text-[9px] font-black flex items-center justify-center shrink-0">
+                {i + 1}
+              </span>
+              <span className="text-xs font-semibold text-slate-700">{test}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Risk Score Bar */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">AI Risk Confidence Score</p>
+          <span className={`text-xs font-black ${
+            riskLevel === 'HIGH' ? 'text-rose-700' : riskLevel === 'MODERATE' ? 'text-amber-700' : 'text-emerald-700'
+          }`}>{Math.round(riskScore * 100)}%</span>
+        </div>
+        <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-700 bg-gradient-to-r ${
+              riskLevel === 'HIGH' ? 'from-rose-500 to-red-400' : riskLevel === 'MODERATE' ? 'from-amber-400 to-orange-400' : 'from-emerald-400 to-teal-400'
+            }`}
+            style={{ width: `${Math.round(riskScore * 100)}%` }}
+          />
+        </div>
+      </div>
+
+      {/* CTA */}
+      {onBookTeleconsult && (
+        <button
+          type="button"
+          onClick={onBookTeleconsult}
+          className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-extrabold text-sm text-white bg-gradient-to-r ${info.gradientClass} shadow-lg hover:scale-[1.02] active:scale-95 transition-all`}
+        >
+          <Video className="w-4 h-4" />
+          Book Teleconsult with Nearest {info.specialty.split(' / ')[0]}
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
+    </div>
+  );
+};
+

@@ -41,15 +41,39 @@ export interface LocalAssessment {
   synced: boolean;
 }
 
+export interface LocalAppointment {
+  id: string;
+  patient_name: string;
+  patient_phone: string;
+  doctor_name: string;
+  doctor_specialty: string;
+  doctor_address: string;
+  appointment_date: string;    // ISO date string e.g. "2026-08-12"
+  appointment_time: string;    // e.g. "10:00 AM"
+  notes: string;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+  risk_level?: string;
+  likely_conditions?: string[];
+  created_at: string;
+  synced: boolean;
+}
+
 class RuralHealthDatabase extends Dexie {
   patients!: Table<LocalPatient>;
   assessments!: Table<LocalAssessment>;
+  appointments!: Table<LocalAppointment>;
 
   constructor() {
     super('RuralHealthOfflineDB');
     this.version(1).stores({
       patients: 'id, name, village, phone, synced, created_at',
       assessments: 'id, patient_id, risk_level, referral_status, synced, created_at'
+    });
+    // Version 2: adds appointments table
+    this.version(2).stores({
+      patients: 'id, name, village, phone, synced, created_at',
+      assessments: 'id, patient_id, risk_level, referral_status, synced, created_at',
+      appointments: 'id, patient_name, doctor_name, appointment_date, status, created_at'
     });
   }
 }

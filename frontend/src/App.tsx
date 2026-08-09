@@ -4,12 +4,14 @@ import { AshaScreeningFlow } from './components/AshaScreeningFlow';
 import { PhcDashboard } from './components/PhcDashboard';
 import { PatientDirectory } from './components/PatientDirectory';
 import { HealthChatbot } from './components/HealthChatbot';
+import { TeleconsultBooking } from './components/TeleconsultBooking';
 import type { Language } from './i18n/translations';
 import { db } from './db/offlineDb';
 import { useLiveQuery } from 'dexie-react-hooks';
+import CursorAnimation from './components/CursorAnimation';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState<'asha' | 'phc' | 'patients' | 'high-risk'>('asha');
+  const [currentTab, setCurrentTab] = useState<'asha' | 'phc' | 'patients' | 'high-risk' | 'teleconsult'>('asha');
   const [lang, setLang] = useState<Language>('en');
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -123,6 +125,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+      <CursorAnimation />
       
       {/* Top Header */}
       <Header
@@ -155,6 +158,7 @@ export function App() {
                 triggerSync();
               }
             }}
+            onBookTeleconsult={() => setCurrentTab('teleconsult')}
           />
         )}
 
@@ -168,6 +172,13 @@ export function App() {
 
         {currentTab === 'patients' && (
           <PatientDirectory
+            lang={lang}
+            isOnline={isOnline}
+          />
+        )}
+
+        {currentTab === 'teleconsult' && (
+          <TeleconsultBooking
             lang={lang}
             isOnline={isOnline}
           />

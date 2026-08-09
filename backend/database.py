@@ -98,6 +98,37 @@ class AssessmentModel(Base):
     def contributing_factors(self, value):
         self.contributing_factors_json = json.dumps(value or [])
 
+
+class AppointmentModel(Base):
+    """Stores teleconsultation bookings."""
+    __tablename__ = "appointments"
+
+    id = Column(String, primary_key=True, index=True)
+    patient_name = Column(String, nullable=False)
+    patient_phone = Column(String, nullable=True, default="")
+    doctor_name = Column(String, nullable=False)
+    doctor_specialty = Column(String, nullable=True, default="General Physician")
+    doctor_address = Column(String, nullable=True, default="")
+    appointment_date = Column(String, nullable=False)   # e.g. "2026-08-12"
+    appointment_time = Column(String, nullable=False)   # e.g. "10:00 AM"
+    notes = Column(Text, default="")
+    status = Column(String, default="PENDING")          # PENDING, CONFIRMED, CANCELLED, COMPLETED
+    risk_level = Column(String, nullable=True)
+    likely_conditions_json = Column(Text, default="[]")
+    created_at = Column(String, default=lambda: datetime.utcnow().isoformat())
+
+    @property
+    def likely_conditions(self):
+        try:
+            return json.loads(self.likely_conditions_json or "[]")
+        except:
+            return []
+
+    @likely_conditions.setter
+    def likely_conditions(self, value):
+        self.likely_conditions_json = json.dumps(value or [])
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

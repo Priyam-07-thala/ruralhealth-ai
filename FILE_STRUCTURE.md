@@ -135,6 +135,7 @@ frontend/
 +-- public/
 |   +-- favicon.svg
 |   +-- icons.svg
+|   +-- mascots/               <- AI-generated doctor mascot images
 +-- src/
     +-- main.tsx              <- React bootstrap
     +-- App.tsx               <- Root component (routing, network, sync)
@@ -147,6 +148,8 @@ frontend/
     |   +-- AshaScreeningFlow.tsx  <- 3-step screening wizard (CORE)
     |   +-- PhcDashboard.tsx       <- PHC doctor analytics dashboard
     |   +-- PatientDirectory.tsx   <- Patient list + history viewer
+    |   +-- TeleconsultBooking.tsx <- Dual-map teleconsultation module
+    |   +-- CursorAnimation.tsx    <- Medical-themed trailing cursor animation
     |   +-- MedicalDisclaimer.tsx  <- Reusable disclaimer banner
     |   +-- VoiceInputButton.tsx   <- Voice input (online mic) / keyboard panel (offline fallback)
     |   +-- HealthChatbot.tsx      <- Floating AI health assistant (OpenAI GPT-4o mini)
@@ -176,6 +179,15 @@ frontend/
 **PhcDashboard.tsx** - Doctor/district analytics dashboard. Shows summary cards (total patients, today's count, high-risk, pending referrals), Recharts risk distribution chart, and filterable High-Risk Priority Queue table with inline referral actions.
 
 **PatientDirectory.tsx** - Searchable patient registry. Search by name/village. Click patient to open assessment history modal.
+
+**TeleconsultBooking.tsx** - Dual-map Teleconsultation Module:
+- Displays nearby hospitals on an interactive map.
+- Uses a fallback mechanism: tries Google Maps first, falls back to OpenStreetMap (Leaflet) Nominatim if Google Maps fails or has no key.
+- Includes a manual location search bar.
+- Highlights specific hospitals in the list when their map markers are clicked and vice-versa.
+
+**CursorAnimation.tsx** - Global medical-themed trailing cursor animation overlay.
+- Uses HTML5 Canvas to render floating, rotating red hearts and blue medical crosses trailing behind the user's mouse.
 
 **MedicalDisclaimer.tsx** - Reusable disclaimer banner. Displayed on screening result step.
 

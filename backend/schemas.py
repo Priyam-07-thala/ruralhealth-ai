@@ -80,3 +80,38 @@ class SyncResponse(BaseModel):
     synced_patients_count: int
     synced_assessments_count: int
     message: str
+
+
+# ─── APPOINTMENT SCHEMAS ───────────────────────────────────────────────────────
+
+class AppointmentCreate(BaseModel):
+    id: Optional[str] = None
+    patient_name: str
+    patient_phone: Optional[str] = ""
+    doctor_name: str
+    doctor_specialty: Optional[str] = "General Physician"
+    doctor_address: Optional[str] = ""
+    appointment_date: str          # "YYYY-MM-DD"
+    appointment_time: str          # "HH:MM AM/PM"
+    notes: Optional[str] = ""
+    status: Optional[str] = "PENDING"
+    risk_level: Optional[str] = None
+    likely_conditions: Optional[List[str]] = []
+
+class AppointmentResponse(BaseModel):
+    id: str
+    patient_name: str
+    patient_phone: Optional[str]
+    doctor_name: str
+    doctor_specialty: Optional[str]
+    doctor_address: Optional[str]
+    appointment_date: str
+    appointment_time: str
+    notes: Optional[str]
+    status: str
+    risk_level: Optional[str]
+    likely_conditions: List[str]
+    created_at: str
+
+    class Config:
+        from_attributes = True

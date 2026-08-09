@@ -11,15 +11,14 @@ from dotenv import load_dotenv
 # Load .env from the same directory as this file
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '.env'))
 
-from database import init_db, get_db, PatientModel, AssessmentModel
+from database import init_db, get_db, PatientModel, AssessmentModel, AppointmentModel
 from schemas import (
     PatientCreate, PatientResponse,
     AssessmentCreate, AssessmentResponse,
-    ReferralUpdate, SyncPayload, SyncResponse
+    ReferralUpdate, SyncPayload, SyncResponse,
+    AppointmentCreate, AppointmentResponse
 )
 from ml_engine import screening_engine, MEDICAL_DISCLAIMER
-
-# Load ML predictor at startup (once) — raises no exception if model absent
 try:
     from ml.predictor import disease_predictor as _dp
     _ML_PREDICTOR = _dp
@@ -77,6 +76,33 @@ def create_patient(patient: PatientCreate, db: Session = Depends(get_db)):
 @app.get("/api/patients", response_model=List[PatientResponse])
 def get_patients(db: Session = Depends(get_db)):
     return db.query(PatientModel).order_by(PatientModel.created_at.desc()).all()
+
+
+@app.put("/api/patients/{patient_id}", response_model=PatientResponse)
+def update_patient(patient_id: str, patient: PatientCreate, db: Session = Depends(get_db)):
+    """Edit patient demographic details (name, age, gender, village, phone)."""
+    existing = db.query(PatientModel).filter(PatientModel.id == patient_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    existing.name    = patient.name
+    existing.age     = patient.age
+    existing.gender  = patient.gender
+    existing.village = patient.village
+    existing.phone   = patient.phone
+    db.commit()
+    db.refresh(existing)
+    return existing
+
+
+@app.delete("/api/patients/{patient_id}")
+def delete_patient(patient_id: str, db: Session = Depends(get_db)):
+    """Delete a patient and ALL their linked assessments (cascade)."""
+    existing = db.query(PatientModel).filter(PatientModel.id == patient_id).first()
+    if not existing:
+        raise HTTPException(status_code=404, detail="Patient not found")
+    db.delete(existing)   # cascade deletes assessments via relationship
+    db.commit()
+    return {"message": "Patient and linked assessments deleted", "id": patient_id}
 
 # --- ASSESSMENTS & AI RISK ENDPOINTS ---
 
@@ -512,3 +538,112 @@ def ml_predict(request: MLPredictRequest):
             "This is a decision-support prototype, not a clinically validated diagnostic system."
         )
     )
+
+
+# ─── TELECONSULTATION APPOINTMENTS ENDPOINTS ───────────────────────────────────────
+
+@app.post("/api/appointments", response_model=AppointmentResponse)
+def create_appointment(appt: AppointmentCreate, db: Session = Depends(get_db)):
+    """
+    Save a teleconsultation / doctor appointment booking.
+    """
+    appt_id = appt.id or str(uuid.uuid4())
+    existing = db.query(AppointmentModel).filter(AppointmentModel.id == appt_id).first()
+    if existing:
+        return AppointmentResponse(
+            id=existing.id,
+            patient_name=existing.patient_name,
+            patient_phone=existing.patient_phone,
+            doctor_name=existing.doctor_name,
+            doctor_specialty=existing.doctor_specialty,
+            doctor_address=existing.doctor_address,
+            appointment_date=existing.appointment_date,
+            appointment_time=existing.appointment_time,
+            notes=existing.notes,
+            status=existing.status,
+            risk_level=existing.risk_level,
+            likely_conditions=existing.likely_conditions,
+            created_at=existing.created_at
+        )
+
+    db_appt = AppointmentModel(
+        id=appt_id,
+        patient_name=appt.patient_name,
+        patient_phone=appt.patient_phone or "",
+        doctor_name=appt.doctor_name,
+        doctor_specialty=appt.doctor_specialty or "General Physician",
+        doctor_address=appt.doctor_address or "",
+        appointment_date=appt.appointment_date,
+        appointment_time=appt.appointment_time,
+        notes=appt.notes or "",
+        status=appt.status or "PENDING",
+        risk_level=appt.risk_level,
+        created_at=datetime.utcnow().isoformat()
+    )
+    db_appt.likely_conditions = appt.likely_conditions or []
+    db.add(db_appt)
+    db.commit()
+    db.refresh(db_appt)
+
+    return AppointmentResponse(
+        id=db_appt.id,
+        patient_name=db_appt.patient_name,
+        patient_phone=db_appt.patient_phone,
+        doctor_name=db_appt.doctor_name,
+        doctor_specialty=db_appt.doctor_specialty,
+        doctor_address=db_appt.doctor_address,
+        appointment_date=db_appt.appointment_date,
+        appointment_time=db_appt.appointment_time,
+        notes=db_appt.notes,
+        status=db_appt.status,
+        risk_level=db_appt.risk_level,
+        likely_conditions=db_appt.likely_conditions,
+        created_at=db_appt.created_at
+    )
+
+
+@app.get("/api/appointments", response_model=List[AppointmentResponse])
+def list_appointments(db: Session = Depends(get_db)):
+    """
+    Retrieve all teleconsultation appointments ordered by date desc.
+    """
+    appts = db.query(AppointmentModel).order_by(AppointmentModel.created_at.desc()).all()
+    return [
+        AppointmentResponse(
+            id=a.id,
+            patient_name=a.patient_name,
+            patient_phone=a.patient_phone,
+            doctor_name=a.doctor_name,
+            doctor_specialty=a.doctor_specialty,
+            doctor_address=a.doctor_address,
+            appointment_date=a.appointment_date,
+            appointment_time=a.appointment_time,
+            notes=a.notes,
+            status=a.status,
+            risk_level=a.risk_level,
+            likely_conditions=a.likely_conditions,
+            created_at=a.created_at
+        )
+        for a in appts
+    ]
+
+
+@app.patch("/api/appointments/{appointment_id}/status")
+def update_appointment_status(
+    appointment_id: str,
+    body: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Update appointment status (PENDING → CONFIRMED → COMPLETED / CANCELLED).
+    """
+    appt = db.query(AppointmentModel).filter(AppointmentModel.id == appointment_id).first()
+    if not appt:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    valid = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"]
+    new_status = body.get("status", "")
+    if new_status not in valid:
+        raise HTTPException(status_code=400, detail=f"Status must be one of {valid}")
+    appt.status = new_status
+    db.commit()
+    return {"message": "Status updated", "id": appointment_id, "status": new_status}

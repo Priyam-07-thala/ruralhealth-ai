@@ -9,7 +9,7 @@ RuralHealth AI is an offline-first, mobile-responsive web application that bridg
 - **Mobile & Offline-First**: Fully functional in low-connectivity rural areas. Data is stored in the browser using IndexedDB and automatically syncs to the server when an internet connection is restored.
 - **Explainable AI Risk Engine**: A deterministic clinical decision-support engine that evaluates vitals, symptoms, and lifestyle factors to predict health risks (Low/Moderate/High) with clear explanations.
 - **Real ML Disease Classifier**: A secondary symptom-based disease classification engine powered by a Logistic Regression model trained on a 246,000+ row dataset, deployed as a FastApi singleton.
-- **Teleconsultation Booking (Dual-Map)**: An interactive hospital finder. Uses Google Maps as the primary engine and seamlessly falls back to OpenStreetMap (Leaflet) if no API key is provided or Google Maps fails.
+- **Teleconsultation Booking**: An interactive hospital finder. Uses Google Maps as the primary engine.
 - **Multilingual Support & Voice Input**: Switch the entire UI instantly between English, Hindi, and Bengali. Supports hands-free voice dictation of symptoms using the Web Speech API (with a seamless fallback to an offline typing panel).
 - **AI Health Assistant Chatbot**: Integrated OpenAI GPT-4o mini floating chat widget that provides home care tips with strict medical safety guardrails.
 - **Engaging UI/UX**: Includes an interactive context-aware Doctor Mascot that reacts dynamically to patient risk scores, and a beautiful medical-themed trailing cursor animation.
